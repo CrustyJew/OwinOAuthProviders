@@ -13,6 +13,7 @@ using Microsoft.Owin.Security.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Owin.Security.Providers.Reddit.Provider;
+using System.Linq;
 
 namespace Owin.Security.Providers.Reddit
 {
@@ -63,6 +64,15 @@ namespace Owin.Security.Providers.Reddit
                 {
                     return new AuthenticationTicket(null, properties);
                 }
+                List<string> scopes = new List<string>();
+                
+                if (properties.Dictionary.ContainsKey("AdditionalScopes"))
+                {
+                    scopes.AddRange( properties.Dictionary["AdditionalScopes"].Split(','));
+                }
+                scopes.AddRange(Options.Scope);
+                //remove duplicates and empty strings
+                scopes = scopes.Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
 
                 string requestPrefix = Request.Scheme + "://" + Request.Host;
                 string redirectUri = requestPrefix + Request.PathBase + Options.CallbackPath;
@@ -73,7 +83,7 @@ namespace Owin.Security.Providers.Reddit
                 body.Add(new KeyValuePair<string, string>("code", code));
                 body.Add(new KeyValuePair<string, string>("redirect_uri", redirectUri));
                 body.Add(new KeyValuePair<string, string>("state", state));
-                body.Add(new KeyValuePair<string, string>("scope", string.Join(",", Options.Scope)));
+                body.Add(new KeyValuePair<string, string>("scope", string.Join(",", scopes)));
                 var request = new HttpRequestMessage(HttpMethod.Post, TokenEndpoint);
                 request.Headers.Add("User-Agent", Options.UserAgent);
                 request.Content = new FormUrlEncodedContent(body);
@@ -124,6 +134,8 @@ namespace Owin.Security.Providers.Reddit
                 context.Identity.AddClaim(new Claim("urn:reddit:overeighteen", context.OverEighteen.ToString()));
                 context.Properties = properties;
 
+                context.Scope = scopes;
+
                 await Options.Provider.Authenticated(context);
 
                 return new AuthenticationTicket(context.Identity, context.Properties);
@@ -167,11 +179,22 @@ namespace Owin.Security.Providers.Reddit
                     properties.RedirectUri = currentUri;
                 }
 
+                List<string> scopes = new List<string>();
+
+                if (properties.Dictionary.ContainsKey("AdditionalScopes"))
+                {
+                    scopes.AddRange(properties.Dictionary["AdditionalScopes"].Split(','));
+                }
+                scopes.AddRange(Options.Scope);
+
+                //remove duplicates and empty strings
+                scopes = scopes.Distinct().Where(s => !string.IsNullOrEmpty(s)).ToList();
+
                 // OAuth2 10.12 CSRF
                 GenerateCorrelationId(properties);
 
                 // comma separated
-                string scope = string.Join(",", Options.Scope);
+                string scope = string.Join(",", scopes);
 
                 string state = Options.StateDataFormat.Protect(properties);
 

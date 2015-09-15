@@ -7,6 +7,7 @@ using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Provider;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace Owin.Security.Providers.Reddit.Provider
 {
@@ -97,6 +98,10 @@ namespace Owin.Security.Providers.Reddit.Provider
         /// Gets or sets a property bag for common authentication properties
         /// </summary>
         public AuthenticationProperties Properties { get; set; }
+        /// <summary>
+        /// Gets the list of Scope properties that the user agreed to authenticate with
+        /// </summary>
+        public List<string> Scope{ get; set; }
 
         private static string TryGetValue(JObject user, string propertyName)
         {

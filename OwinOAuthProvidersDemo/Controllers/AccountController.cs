@@ -390,10 +390,20 @@ namespace OwinOAuthProvidersDemo.Controllers
                 RedirectUri = redirectUri;
                 UserId = userId;
             }
+            //Overload to add scopes to Reddit request
+            public ChallengeResult(string provider, string redirectUri, string userId, string addScopes)
+            {
+                LoginProvider = provider;
+                RedirectUri = redirectUri;
+                UserId = userId;
+                RedditAdditionalScopes = addScopes;
+            }
 
             public string LoginProvider { get; set; }
             public string RedirectUri { get; set; }
             public string UserId { get; set; }
+            //Used to add additional scopes to a single Reddit authentication request
+            public string RedditAdditionalScopes { get; set; }
 
             public override void ExecuteResult(ControllerContext context)
             {
@@ -401,6 +411,11 @@ namespace OwinOAuthProvidersDemo.Controllers
                 if (UserId != null)
                 {
                     properties.Dictionary[XsrfKey] = UserId;
+                }
+                //Used to add additional scopes to a single Reddit authentication request
+                if (!string.IsNullOrEmpty(RedditAdditionalScopes))
+                {
+                    properties.Dictionary.Add("AdditionalScopes", RedditAdditionalScopes);
                 }
                 context.HttpContext.GetOwinContext().Authentication.Challenge(properties, LoginProvider);
             }

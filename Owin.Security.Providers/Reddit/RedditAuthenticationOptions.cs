@@ -70,6 +70,7 @@ namespace Owin.Security.Providers.Reddit
 
         /// <summary>
         /// A list of permissions to request.
+        /// To add additional scopes to a specific authentication request, add a comma seperated list of the scopes to add to your AuthenticationParameters.Dictionary with key "AdditionalScopes"
         /// </summary>
         public IList<string> Scope { get; private set; }
 
